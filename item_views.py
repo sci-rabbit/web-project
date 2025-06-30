@@ -17,12 +17,7 @@ def list_items():
 
 @router.get("/latest/")
 def get_latest_item():
-    return {
-        "item": {
-            "id": 0,
-            "name": "latest"
-        }
-    }
+    return {"item": {"id": 0, "name": "latest"}}
 
 
 @router.get("/{item_id}/")
@@ -30,6 +25,6 @@ def get_item_by_id(item_id: Annotated[int, Path(ge=1, le=1_000_000)]):
 
     return {
         "item": {
-            "id": item_id
-        }
+            "id": item_id,
+        },
     }
