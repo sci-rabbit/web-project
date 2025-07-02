@@ -1,18 +1,16 @@
 from typing import TYPE_CHECKING
 
-from sqlalchemy import String, Text, ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import String, Text
+from sqlalchemy.orm import Mapped, mapped_column
 
-from core.models import Base, UserRelationMixin
-
-if TYPE_CHECKING:
-    from .user import User
+from core.models import Base
+from .mixin import UserRelationMixin
 
 
 class Post(UserRelationMixin, Base):
-    _user_id_nullable: bool = False
-    _user_id_unique: bool = False
-    _user_back_populates: str | None = "posts"
+    _user_id_nullable = False
+    _user_id_unique = False
+    _user_back_populates = "posts"
 
     tittle: Mapped[str] = mapped_column(String(100))
     body: Mapped[str] = mapped_column(

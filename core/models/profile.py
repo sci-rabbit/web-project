@@ -5,9 +5,9 @@ from core.models import Base
 
 
 class Profile(Base):
-    _user_id_nullable: bool = False
-    _user_id_unique: bool = True
-    _user_back_populates: str | None = "profiles"
+    _user_id_nullable = False
+    _user_id_unique = True
+    _user_back_populates = "profiles"
 
     first_name: Mapped[str | None] = mapped_column(String(44))
     last_name: Mapped[str | None] = mapped_column(String(44))

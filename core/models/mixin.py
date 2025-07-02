@@ -3,14 +3,12 @@ from typing import TYPE_CHECKING
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import declared_attr, Mapped, mapped_column, relationship
 
-from core.models import Base
-
 
 if TYPE_CHECKING:
     from .user import User
 
 
-class UserRelationMixin(Base):
+class UserRelationMixin:
     _user_id_nullable: bool = False
     _user_id_unique: bool = False
     _user_back_populates: str | None = None
