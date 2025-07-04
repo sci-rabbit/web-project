@@ -4,7 +4,15 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
-from core.models import db_manager, User, Profile, Post
+from core.models import (
+    db_manager,
+    User,
+    Profile,
+    Post,
+    Product,
+    OrderProductAssociation,
+)
+from core.models.order import Order
 
 
 async def create_user(username: str, session: AsyncSession) -> User:
@@ -120,6 +128,51 @@ async def get_profiles_with_user_and_posts(session: AsyncSession) -> list[Profil
     return list(profiles)
 
 
+async def create_order(session: AsyncSession, promo_code: str | None = None) -> Order:
+
+    order = Order(promo_code=promo_code)
+    session.add(order)
+    await session.commit()
+    print(order.id, order.created_at, order.promo_code)
+    return order
+
+
+async def create_product(
+    session: AsyncSession, name: str, description: str, price: int
+) -> Product:
+    product = Product(name=name, description=description, price=price)
+
+    session.add(product)
+    await session.commit()
+    print(product.id, product.name, product.description, product.price)
+    return product
+
+
+async def get_orders_with_products(session: AsyncSession) -> list[Order]:
+    query = select(Order).options(
+        selectinload(Order.products_details).joinedload(OrderProductAssociation.product)
+    )
+    orders = await session.scalars(query)
+
+    for order in orders:
+        print("Order: ", order.id, order.promo_code, order.created_at)
+        print("---Products: ")
+        for detail in order.products_details:
+            print(
+                "------------",
+                detail.product.name,
+                detail.id,
+                detail.order_id,
+                detail.product_id,
+                detail.count,
+                detail.unit_price,
+            )
+        print("*" * 30)
+        print()
+
+    return list(orders)
+
+
 async def main():
     # session = db_manager.session_dep()
     async with db_manager.session_factory() as session:
@@ -137,7 +190,44 @@ async def main():
         #
         # await create_post(user_YE.id, session, "SQL", "SQLMAP")
         # await create_post(user_ape.id, session, "FastApi", "Pydantic")
-        await get_profiles_with_user_and_posts(session=session)
+        product_one = await create_product(
+            session=session, name="PS4", description="New console", price=500
+        )
+
+        product_two = await create_product(
+            session=session, name="Xbox", description="Console of Microsoft", price=600
+        )
+
+        # --------------------------------------------
+        order_one = await create_order(session=session)
+        order_two_with_promo = await create_order(session=session, promo_code="hui")
+
+        # --------------------------------------------
+        order_one = await session.scalar(
+            select(Order)
+            .where(Order.id == order_one.id)
+            .options(selectinload(Order.products_details))
+        )
+        order_two_with_promo = await session.scalar(
+            select(Order)
+            .where(Order.id == order_two_with_promo.id)
+            .options(selectinload(Order.products_details))
+        )
+
+        # -----------------------------------------------
+        order_one.products_details.append(
+            OrderProductAssociation(
+                product=product_one, count=10, unit_price=product_one.price
+            )
+        )
+        order_two_with_promo.products_details.append(
+            OrderProductAssociation(
+                product=product_two, count=30, unit_price=product_two.price
+            )
+        )
+
+        await session.commit()
+        await get_orders_with_products(session=session)
 
 
 if __name__ == "__main__":
